@@ -1,7 +1,8 @@
+import { z } from "zod";
+import { calculateResponse } from "../../../lib/schemas";
 import type {
   ApiError,
   CalculateRequest,
-  CalculateResponse,
   OperationDescriptor,
 } from "../../../lib/schemas";
 
@@ -12,4 +13,5 @@ export type CalculatorFormProps = {
   pending?: boolean;
 };
 
-export type HistoryEntry = CalculateResponse & { id: string };
+export const historyEntry = calculateResponse.extend({ id: z.string() });
+export type HistoryEntry = z.infer<typeof historyEntry>;
