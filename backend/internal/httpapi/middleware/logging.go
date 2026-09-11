@@ -1,4 +1,4 @@
-package httpapi
+package middleware
 
 import (
 	"log/slog"
@@ -16,7 +16,7 @@ func (sw *statusWriter) WriteHeader(status int) {
 	sw.ResponseWriter.WriteHeader(status)
 }
 
-func Logging(logger *slog.Logger) func(http.Handler) http.Handler {
+func Logging(logger *slog.Logger) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
@@ -25,7 +25,7 @@ func Logging(logger *slog.Logger) func(http.Handler) http.Handler {
 			next.ServeHTTP(sw, r)
 
 			logger.Info("request",
-				"request_id", requestIDFromContext(r.Context()),
+				"request_id", RequestIDFromContext(r.Context()),
 				"method", r.Method,
 				"path", r.URL.Path,
 				"status", sw.status,
