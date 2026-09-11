@@ -1,4 +1,4 @@
-package httpapi
+package handler
 
 import (
 	"encoding/json"
@@ -6,11 +6,15 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/RochaDiego04/calculator/backend/internal/httpapi/respond"
 )
+
+const testMaxBodyBytes = 1 << 20
 
 func doCalculate(t *testing.T, body string) *httptest.ResponseRecorder {
 	t.Helper()
-	h := NewHandler()
+	h := New(testMaxBodyBytes)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/calculate", strings.NewReader(body))
 	rec := httptest.NewRecorder()
 	h.Calculate(rec, req)
@@ -43,43 +47,44 @@ func TestCalculate(t *testing.T) {
 	})
 
 	t.Run("malformed json", func(t *testing.T) {
-		rec := doCalculate(t, `not json`)
-		assertErrorCode(t, rec, http.StatusBadRequest, "INVALID_JSON")
+		assertErrorCode(t, doCalculate(t, `not json`), http.StatusBadRequest, "INVALID_JSON")
 	})
 
 	t.Run("unknown field", func(t *testing.T) {
-		rec := doCalculate(t, `{"operation":"add","a":1,"b":2,"x":9}`)
-		assertErrorCode(t, rec, http.StatusBadRequest, "INVALID_JSON")
+		assertErrorCode(t, doCalculate(t, `{"operation":"add","a":1,"b":2,"x":9}`), http.StatusBadRequest, "INVALID_JSON")
+	})
+
+	t.Run("oversized body", func(t *testing.T) {
+		h := New(16)
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/calculate",
+			strings.NewReader(`{"operation":"add","a":1,"b":2}`))
+		rec := httptest.NewRecorder()
+		h.Calculate(rec, req)
+		assertErrorCode(t, rec, http.StatusRequestEntityTooLarge, "REQUEST_TOO_LARGE")
 	})
 
 	t.Run("missing a", func(t *testing.T) {
-		rec := doCalculate(t, `{"operation":"add","b":2}`)
-		assertErrorCode(t, rec, http.StatusUnprocessableEntity, "MISSING_OPERAND")
+		assertErrorCode(t, doCalculate(t, `{"operation":"add","b":2}`), http.StatusUnprocessableEntity, "MISSING_OPERAND")
 	})
 
 	t.Run("missing b for binary op", func(t *testing.T) {
-		rec := doCalculate(t, `{"operation":"divide","a":12}`)
-		assertErrorCode(t, rec, http.StatusUnprocessableEntity, "MISSING_OPERAND")
+		assertErrorCode(t, doCalculate(t, `{"operation":"divide","a":12}`), http.StatusUnprocessableEntity, "MISSING_OPERAND")
 	})
 
 	t.Run("unknown operation", func(t *testing.T) {
-		rec := doCalculate(t, `{"operation":"cos","a":1,"b":2}`)
-		assertErrorCode(t, rec, http.StatusUnprocessableEntity, "UNKNOWN_OPERATION")
+		assertErrorCode(t, doCalculate(t, `{"operation":"cos","a":1,"b":2}`), http.StatusUnprocessableEntity, "UNKNOWN_OPERATION")
 	})
 
 	t.Run("division by zero", func(t *testing.T) {
-		rec := doCalculate(t, `{"operation":"divide","a":12,"b":0}`)
-		assertErrorCode(t, rec, http.StatusUnprocessableEntity, "DIVISION_BY_ZERO")
+		assertErrorCode(t, doCalculate(t, `{"operation":"divide","a":12,"b":0}`), http.StatusUnprocessableEntity, "DIVISION_BY_ZERO")
 	})
 
 	t.Run("negative square root", func(t *testing.T) {
-		rec := doCalculate(t, `{"operation":"sqrt","a":-4}`)
-		assertErrorCode(t, rec, http.StatusUnprocessableEntity, "NEGATIVE_SQUARE_ROOT")
+		assertErrorCode(t, doCalculate(t, `{"operation":"sqrt","a":-4}`), http.StatusUnprocessableEntity, "NEGATIVE_SQUARE_ROOT")
 	})
 
 	t.Run("result not representable", func(t *testing.T) {
-		rec := doCalculate(t, `{"operation":"power","a":1e308,"b":2}`)
-		assertErrorCode(t, rec, http.StatusUnprocessableEntity, "RESULT_NOT_REPRESENTABLE")
+		assertErrorCode(t, doCalculate(t, `{"operation":"power","a":1e308,"b":2}`), http.StatusUnprocessableEntity, "RESULT_NOT_REPRESENTABLE")
 	})
 }
 
@@ -88,7 +93,7 @@ func assertErrorCode(t *testing.T, rec *httptest.ResponseRecorder, wantStatus in
 	if rec.Code != wantStatus {
 		t.Fatalf("status = %d, want %d, body = %s", rec.Code, wantStatus, rec.Body.String())
 	}
-	var got errorBody
+	var got respond.ErrorBody
 	if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil {
 		t.Fatalf("unmarshal error body: %v", err)
 	}

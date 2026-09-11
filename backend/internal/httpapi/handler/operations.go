@@ -1,11 +1,12 @@
-package httpapi
+package handler
 
 import (
 	"net/http"
 
 	"github.com/RochaDiego04/calculator/backend/internal/calc"
+	"github.com/RochaDiego04/calculator/backend/internal/httpapi/respond"
 )
 
 func (h *Handler) Operations(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, calc.Operations())
+	respond.JSON(w, http.StatusOK, calc.Operations())
 }
