@@ -1,6 +1,6 @@
 import { formatResult } from "../../../lib/format";
 import type { OperationDescriptor } from "../../../lib/schemas";
-import type { HistoryEntry } from "../types";
+import type { HistoryEntry } from "../types/types";
 
 type HistoryPanelProps = {
   entries: HistoryEntry[];
@@ -17,11 +17,7 @@ export function HistoryPanel({
     <section>
       <div>
         <h2>History</h2>
-        <button
-          type="button"
-          onClick={onClear}
-          disabled={entries.length === 0}
-        >
+        <button type="button" onClick={onClear} disabled={entries.length === 0}>
           Clear
         </button>
       </div>

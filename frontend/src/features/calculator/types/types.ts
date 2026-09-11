@@ -3,7 +3,7 @@ import type {
   CalculateRequest,
   CalculateResponse,
   OperationDescriptor,
-} from "../../lib/schemas";
+} from "../../../lib/schemas";
 
 export type CalculatorFormProps = {
   operations: OperationDescriptor[];
