@@ -1,0 +1,28 @@
+# No `version:` field. It has been obsolete since Compose V2 and only emits a
+# deprecation warning now.
+services:
+  api:
+    build: ./backend
+    environment:
+      APP_ENV: production
+      # The browser only ever talks to web, so this is the origin it would send.
+      # CORS is not needed through the nginx proxy, but the service has to be
+      # correct standalone too.
+      CORS_ORIGIN: http://localhost:8080
+    healthcheck:
+      test: ["CMD", "/app", "-health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      # Gives a slow boot room without counting early failures against retries.
+      start_period: 5s
+
+  web:
+    build: ./frontend
+    ports:
+      - "8080:8080"
+    depends_on:
+      api:
+        # Not plain depends_on: that waits for the container to start, not to be
+        # ready, which is what causes "it works on the second compose up".
+        condition: service_healthy
