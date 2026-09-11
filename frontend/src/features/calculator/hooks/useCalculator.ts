@@ -5,7 +5,7 @@ import type {
   CalculateRequest,
   CalculateResponse,
 } from "../../../lib/schemas";
-import type { HistoryEntry } from "../types";
+import type { HistoryEntry } from "../types/types";
 
 const MAX_HISTORY = 10;
 

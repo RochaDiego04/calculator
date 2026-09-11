@@ -1,5 +1,5 @@
 import { useCalculatorForm } from "../hooks/useCalculatorForm";
-import type { CalculatorFormProps } from "../types";
+import type { CalculatorFormProps } from "../types/types";
 
 export function CalculatorForm({
   operations,
