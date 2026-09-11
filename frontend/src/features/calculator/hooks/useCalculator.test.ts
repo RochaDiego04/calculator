@@ -3,6 +3,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { ApiErrorResponse, calculate } from "../../../lib/api";
 import type { CalculateResponse } from "../../../lib/schemas";
 import { makeCalculateRequest, makeCalculateResponse } from "../../../test/factories";
+import {
+  HISTORY_STORAGE_KEY,
+  loadHistory,
+  saveHistory,
+} from "../utils/historyStorage";
 import { useCalculator } from "./useCalculator";
 
 vi.mock("../../../lib/api", async (importOriginal) => {
@@ -136,5 +141,65 @@ describe("useCalculator", () => {
     act(() => result.current.clearHistory());
 
     expect(result.current.history).toEqual([]);
+  });
+
+  describe("persistence", () => {
+    describe("given history was already saved from a previous session", () => {
+      it("then loads it on mount", () => {
+        saveHistory([{ ...makeCalculateResponse(), id: "saved-1" }]);
+
+        const { result } = setup();
+
+        expect(result.current.history).toEqual([
+          { ...makeCalculateResponse(), id: "saved-1" },
+        ]);
+      });
+    });
+
+    describe("given the stored history is corrupted", () => {
+      it("then starts empty instead of throwing", () => {
+        window.localStorage.setItem(HISTORY_STORAGE_KEY, "not valid json");
+
+        const { result } = setup();
+
+        expect(result.current.history).toEqual([]);
+      });
+    });
+
+    describe("given the stored history has the wrong shape", () => {
+      it("then discards it and starts empty", () => {
+        window.localStorage.setItem(
+          HISTORY_STORAGE_KEY,
+          JSON.stringify([{ operation: "add", result: "not a number" }]),
+        );
+
+        const { result } = setup();
+
+        expect(result.current.history).toEqual([]);
+      });
+    });
+
+    describe("when a calculation succeeds", () => {
+      it("then persists the updated history", async () => {
+        vi.mocked(calculate).mockResolvedValue(makeCalculateResponse());
+        const { result } = setup();
+
+        await act(async () => result.current.submit(makeCalculateRequest()));
+
+        expect(loadHistory()).toEqual(result.current.history);
+      });
+    });
+
+    describe("when history is cleared", () => {
+      it("then persists the empty history", async () => {
+        vi.mocked(calculate).mockResolvedValue(makeCalculateResponse());
+        const { result } = setup();
+        await act(async () => result.current.submit(makeCalculateRequest()));
+
+        act(() => result.current.clearHistory());
+
+        expect(loadHistory()).toEqual([]);
+      });
+    });
   });
 });

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ApiErrorResponse, calculate } from "../../../lib/api";
 import type {
   ApiError,
@@ -6,6 +6,7 @@ import type {
   CalculateResponse,
 } from "../../../lib/schemas";
 import type { HistoryEntry } from "../types/types";
+import { loadHistory, saveHistory } from "../utils/historyStorage";
 
 const MAX_HISTORY = 10;
 
@@ -13,7 +14,11 @@ export function useCalculator() {
   const [result, setResult] = useState<CalculateResponse | null>(null);
   const [errors, setErrors] = useState<ApiError[]>([]);
   const [pending, setPending] = useState(false);
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [history, setHistory] = useState<HistoryEntry[]>(() => loadHistory());
+
+  useEffect(() => {
+    saveHistory(history);
+  }, [history]);
 
   async function submit(request: CalculateRequest) {
     setPending(true);
