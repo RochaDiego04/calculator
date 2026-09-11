@@ -1,10 +1,5 @@
 import { z } from "zod";
-
-type ApiError = {
-  code: string;
-  message: string;
-  field?: string;
-};
+import type { ApiError } from "./schemas";
 
 export class ApiErrorResponse extends Error {
   readonly status: number;
