@@ -1,5 +1,99 @@
 @import "tailwindcss";
+@import "@fontsource-variable/outfit";
+@import "@fontsource-variable/jetbrains-mono";
+
+@theme {
+  /* One neutral family only: cool-tinted ink. Never pure black. */
+  --color-ink-950: oklch(0.18 0.012 255);
+  --color-ink-900: oklch(0.22 0.014 255);
+  --color-ink-850: oklch(0.26 0.015 255);
+  --color-ink-800: oklch(0.31 0.016 255);
+  /* Lightness floor set by the WCAG AA check against the glass panel. */
+  --color-ink-600: oklch(0.645 0.016 255);
+  --color-ink-400: oklch(0.72 0.014 255);
+  --color-ink-200: oklch(0.89 0.008 255);
+  --color-ink-50: oklch(0.97 0.005 255);
+
+  /* The single locked accent, taken from the Sezzle reference. */
+  --color-mint-300: oklch(0.88 0.088 168);
+  --color-mint-400: oklch(0.83 0.115 168);
+  --color-mint-500: oklch(0.75 0.125 168);
+  --color-mint-600: oklch(0.64 0.115 168);
+
+  --color-danger-300: oklch(0.82 0.09 22);
+  --color-danger-500: oklch(0.64 0.16 22);
+
+  --font-display: "Outfit Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-numeric: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, monospace;
+
+  /* Shape lock: containers 20px, interactive controls 12px. Nothing else. */
+  --radius-card: 20px;
+  --radius-control: 12px;
+}
+
+/* Native controls (select popup, scrollbars, caret) follow the dark surface
+   instead of the OS default white, which is what made the dropdown unreadable. */
+:root {
+  color-scheme: dark;
+}
 
 body {
   margin: 0;
+  background-color: var(--color-ink-950);
+  color: var(--color-ink-200);
+  font-family: var(--font-display);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Belt and braces for the dropdown: some platforms ignore color-scheme here. */
+select option {
+  background-color: var(--color-ink-900);
+  color: var(--color-ink-50);
+}
+
+@utility glass {
+  background-color: color-mix(in oklab, var(--color-ink-900) 62%, transparent);
+  backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid color-mix(in oklab, white 9%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, white 10%, transparent),
+    0 28px 64px -32px color-mix(in oklab, var(--color-mint-600) 34%, black);
+}
+
+/* Lining, tabular figures with the dotted zero turned off, so digits line up
+   in the readout and the history without the mono font's slashed-zero look. */
+@utility numerals {
+  font-family: var(--font-numeric);
+  font-feature-settings:
+    "tnum" 1,
+    "zero" 0;
+}
+
+@utility select-chevron {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237b8494' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 1.05rem;
+}
+
+@utility grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.42'/%3E%3C/svg%3E");
+}
+
+/* Solid fallback when the viewer has asked for less transparency. */
+@media (prefers-reduced-transparency: reduce) {
+  .glass {
+    backdrop-filter: none;
+    background-color: var(--color-ink-900);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
