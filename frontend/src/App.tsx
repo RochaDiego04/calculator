@@ -1,4 +1,5 @@
 import { CalculatorForm } from "./features/calculator/components/CalculatorForm";
+import { HistoryPanel } from "./features/calculator/components/HistoryPanel";
 import { formatResult } from "./lib/format";
 import { useCalculator } from "./features/calculator/hooks/useCalculator";
 import { useCalculatorOperations } from "./features/calculator/hooks/useCalculatorOperations";
@@ -21,6 +22,11 @@ function App() {
         {calculator.result && (
           <output>{formatResult(calculator.result.result)}</output>
         )}
+        <HistoryPanel
+          entries={calculator.history}
+          operations={operationData.operations}
+          onClear={calculator.clearHistory}
+        />
       </section>
     </main>
   );

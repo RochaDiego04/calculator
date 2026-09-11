@@ -91,6 +91,30 @@ describe("App", () => {
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
+  it("adds calculations to history, newest first", async () => {
+    vi.mocked(calculate)
+      .mockResolvedValueOnce({ operation: "add", a: 1, b: 2, result: 3 })
+      .mockResolvedValueOnce({ operation: "add", a: 4, b: 5, result: 9 });
+    const { user } = setup();
+
+    await user.type(screen.getByLabelText("A"), "1");
+    await user.type(await screen.findByLabelText("B"), "2");
+    await user.click(screen.getByRole("button", { name: "Calculate" }));
+    await screen.findByRole("status");
+
+    await user.clear(screen.getByLabelText("A"));
+    await user.type(screen.getByLabelText("A"), "4");
+    await user.clear(screen.getByLabelText("B"));
+    await user.type(screen.getByLabelText("B"), "5");
+    await user.click(screen.getByRole("button", { name: "Calculate" }));
+    await screen.findByRole("status");
+
+    const items = screen.getAllByRole("listitem");
+    expect(items).toHaveLength(2);
+    expect(items[0]).toHaveTextContent("4 + 5 = 9");
+    expect(items[1]).toHaveTextContent("1 + 2 = 3");
+  });
+
   it("then renders the server error message", async () => {
     vi.mocked(calculate).mockRejectedValue(
       new ApiErrorResponse(422, [
