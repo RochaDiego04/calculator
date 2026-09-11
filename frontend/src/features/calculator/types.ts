@@ -1,6 +1,7 @@
 import type {
   ApiError,
   CalculateRequest,
+  CalculateResponse,
   OperationDescriptor,
 } from "../../lib/schemas";
 
@@ -10,3 +11,5 @@ export type CalculatorFormProps = {
   errors?: ApiError[];
   pending?: boolean;
 };
+
+export type HistoryEntry = CalculateResponse & { id: string };
