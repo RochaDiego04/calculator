@@ -55,6 +55,42 @@ describe("App", () => {
     });
   });
 
+  it("clears a previous result when a later calculation fails", async () => {
+    vi.mocked(calculate).mockResolvedValueOnce({
+      operation: "add",
+      a: 1,
+      b: 2,
+      result: 3,
+    });
+    const { user } = setup();
+
+    await user.type(screen.getByLabelText("A"), "1");
+    await user.type(await screen.findByLabelText("B"), "2");
+    await user.click(screen.getByRole("button", { name: "Calculate" }));
+    expect(await screen.findByRole("status")).toHaveTextContent("3");
+
+    vi.mocked(calculate).mockRejectedValueOnce(
+      new ApiErrorResponse(422, [
+        {
+          code: "DIVISION_BY_ZERO",
+          message: "cannot divide by zero",
+          field: "b",
+        },
+      ]),
+    );
+    await user.clear(screen.getByLabelText("A"));
+    await user.type(screen.getByLabelText("A"), "12");
+    await user.clear(screen.getByLabelText("B"));
+    await user.type(screen.getByLabelText("B"), "0");
+    await user.selectOptions(screen.getByLabelText("Operation"), "divide");
+    await user.click(screen.getByRole("button", { name: "Calculate" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "cannot divide by zero",
+    );
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
   it("then renders the server error message", async () => {
     vi.mocked(calculate).mockRejectedValue(
       new ApiErrorResponse(422, [

@@ -19,6 +19,7 @@ export function useCalculator() {
       const response = await calculate(request);
       setResult(response);
     } catch (error) {
+      setResult(null);
       if (error instanceof ApiErrorResponse) {
         setErrors(error.errors);
       } else {
